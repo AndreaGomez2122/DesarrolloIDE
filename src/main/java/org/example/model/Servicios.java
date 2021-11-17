@@ -16,14 +16,28 @@ public class Servicios extends Component {
     public Servicios() {
     }
 
-    public void fileSave(DocumentSave doc, JTextArea texto) throws IOException {
+    public DocumentSave fileSave(DocumentSave doc, JTextArea texto) throws IOException {
 
+        String text;
+        if (texto.getText() != null) {
+            text = texto.getText();
+            doc.setContenido(text);
+        } else {
+            text = "";
+        }
+        File archivo = doc.getRuta();
+        try (FileWriter escritor = new FileWriter(archivo)) {
+            escritor.write(text);
+            JOptionPane.showMessageDialog(null, "Archivo guardado", "Información", JOptionPane.INFORMATION_MESSAGE);
 
-
+        } catch (IOException ex) {
+            System.out.println("Error " + ex.getMessage());
+        }
+        return this.doc;
     }
 
 
-    public DocumentSave fileSaveAs(JTextArea texto) throws IOException {
+    public DocumentSave fileSaveAs(JTextArea texto ) throws IOException {
 
         String text;
         if (texto.getText() != null) {
@@ -68,47 +82,43 @@ public class Servicios extends Component {
         return this.doc;
     }
 
-    public void openFile(JTextArea areaTexto) throws IOException {
+    public DocumentSave openFile(JTextArea texto) throws IOException {
 
-        JFileChooser chooser = new JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                "Archivos de texto", ".txt");
-        chooser.setFileFilter(filter);
-        int returnVal = chooser.showOpenDialog(this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            System.out.println("Has elegido este archivo " +
-                    chooser.getSelectedFile().getName());
-        }
+        JFileChooser selector = new JFileChooser();
+        selector.setCurrentDirectory(new File(System.getProperty("user.home")));
+        selector.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        selector.addChoosableFileFilter(new FileNameExtensionFilter("Archivos de texto (*.txt)", "txt"));
+        selector.addChoosableFileFilter(new FileNameExtensionFilter("Clases java (*.java)", "java"));
+        selector.setAcceptAllFileFilterUsed(false);
 
-        FileReader fr = null;
-        BufferedReader entrada = null;
-        try {
-            fr = new FileReader(chooser.getSelectedFile().getPath());
-            entrada = new BufferedReader(fr);
+        int option = selector.showOpenDialog(texto);
+        File archivo = selector.getSelectedFile();
 
-            while (entrada.ready()) {
-                areaTexto.setText(entrada.readLine());
 
+        if (option == JFileChooser.APPROVE_OPTION) {
+
+            DocumentSave doc = new DocumentSave();
+            doc.setRuta(archivo);
+            doc.setNombreArchivo(archivo.getName());
+
+            BufferedReader br = new BufferedReader(new FileReader(String.valueOf(archivo)));
+            String line = br.readLine();
+            String textonuevo = "";
+            while (line != null) {
+                textonuevo = textonuevo + line + "\n";
+                line = br.readLine();
             }
-            saved = true;
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (null != fr) {
-                    fr.close();
-
-                }
-            } catch (Exception e2) {
-                e2.printStackTrace();
-            }
+            doc.setContenido(textonuevo);
+            texto.setText(doc.getContenido());
+            return doc;
+        } else {
+            JOptionPane.showMessageDialog(null, "Archivo no valido", "Información", JOptionPane.ERROR_MESSAGE);
+            return null;
         }
+    }
 
     }
 
-
-}
 
 
 
